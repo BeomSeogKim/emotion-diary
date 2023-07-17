@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -47,17 +46,20 @@ public class DiaryService {
         return diaryRepository.findAll();
     }
 
-    // TODO 로그인 서비스 개발 후 검증 로직 추가
-    public void delete(Long diaryId) {
-        Optional<Diary> optionalDiary = diaryRepository.findById(diaryId);
-        deleteDiary(optionalDiary);
+    /*
+     TODO 로그인 서비스 개발 후 검증 로직 추가
+     임시로 header를 통해 받는 로직으로 변경
+     */
+    public void delete(Long memberId, Long diaryId) {
+        Diary diary = getDiaryFromDb(diaryId);
+        deleteDiary(memberId, diary);
     }
 
-    private void deleteDiary(Optional<Diary> optionalDiary) {
-        if (optionalDiary.isPresent()) {
-            diaryRepository.delete(optionalDiary.get());
+    private void deleteDiary(Long memberId, Diary diary) {
+        if (diary.getMember().getId().equals(memberId)) {
+            diaryRepository.delete(diary);
         } else {
-            throw new IllegalArgumentException("잘못된 diaryId");
+            throw new IllegalArgumentException("삭제 권한이 없습니다.");
         }
     }
 }

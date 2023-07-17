@@ -133,7 +133,7 @@ class DiaryServiceTest {
         assertThat(diaryRepository.findAll().size()).isEqualTo(1);
 
         // when
-        diaryService.delete(diaryId);
+        diaryService.delete(savedMember.getId(), diaryId);
 
         // then
         assertThat(diaryRepository.findAll().size()).isEqualTo(0);
@@ -152,7 +152,27 @@ class DiaryServiceTest {
 
         // when && then
         assertThatThrownBy(
-                () -> diaryService.delete(diaryId + 1)
+                () -> diaryService.delete(savedMember.getId(), diaryId + 1)
         ).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    @DisplayName("작성자만 게시글 삭제 가능")
+    void delete_noAuthority() {
+
+        // given
+        Member member1 = Member.createMember(new SignupRequestDto("kbs4520", "password", "tommy", 20, "tommy@gmail.com"));
+        Member member2 = Member.createMember(new SignupRequestDto("kbs4522", "password", "tommy", 20, "tommy2@gmail.com"));
+        Member savedMember1 = memberRepository.save(member1);
+        Member savedMember2 = memberRepository.save(member2);
+        DiaryRequestDto diaryRequestDto = new DiaryRequestDto("오늘 나는 해피해요", Emotion.HAPPY);
+        Long diaryId = diaryService.write(savedMember1.getId(), diaryRequestDto);
+        assertThat(diaryRepository.findAll().size()).isEqualTo(1);
+
+        // when && then
+        assertThatThrownBy(
+                () -> diaryService.delete(savedMember2.getId(), diaryId + 1)
+        ).isInstanceOf(IllegalArgumentException.class);
+    }
+
 }
