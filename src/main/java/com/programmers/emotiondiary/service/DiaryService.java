@@ -53,9 +53,8 @@ public class DiaryService {
         );
     }
 
-    // TODO 로그인 서비스 개발 후 조회 로직 수정
     public List<Diary> findDiaryList() {
-        return diaryRepository.findAll();
+        return diaryRepository.findAllDiariesPublic();
     }
 
     public void delete(Long memberId, Long diaryId) {

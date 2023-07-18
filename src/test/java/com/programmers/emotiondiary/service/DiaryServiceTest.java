@@ -144,7 +144,7 @@ class DiaryServiceTest {
     }
 
     @Test
-    @DisplayName("다중 다이어리 리스트 조회 검증")
+    @DisplayName("다중 다이어리 리스트 조회 - 공개된 다이어리만 조회 가능")
     void findDiaryList() {
 
         // given
@@ -152,14 +152,17 @@ class DiaryServiceTest {
         Member savedMember = memberRepository.save(member);
         DiaryRequestDto diaryRequestDto1 = new DiaryRequestDto("오늘 나는 해피해요", Emotion.HAPPY);
         DiaryRequestDto diaryRequestDto2 = new DiaryRequestDto("오늘 나는 우울해요", Emotion.SAD);
-        diaryService.write(savedMember.getId(), diaryRequestDto1);
+        Long diaryId = diaryService.write(savedMember.getId(), diaryRequestDto1);
         diaryService.write(savedMember.getId(), diaryRequestDto2);
+
+        Diary diary = diaryRepository.findById(diaryId).get();
+        diary.publish();
 
         // when
         List<Diary> diaryList = diaryService.findDiaryList();
 
         // then
-        assertThat(diaryList.size()).isEqualTo(2);
+        assertThat(diaryList.size()).isEqualTo(1);
     }
 
     @Test
