@@ -77,13 +77,54 @@ class DiaryServiceTest {
         Long diaryId = diaryService.write(savedMember.getId(), diaryRequestDto);
 
         // when
-        Diary findDiary = diaryService.findDiary(diaryId);
+        Diary findDiary = diaryService.findDiary(diaryId, savedMember.getId());
 
         // then
         assertAll(
                 () -> assertThat(findDiary.getMember()).isEqualTo(savedMember),
                 () -> assertThat(findDiary.getEmotion()).isEqualTo(Emotion.HAPPY)
         );
+    }
+
+    @Test
+    @DisplayName("다이어리 단건 조회 시 private일 경우 다른 회원 조회 불가")
+    void findMember_private() {
+        // given
+        Member member1 = Member.createMember(new SignupRequestDto("kbs4520", "password", "tommy", 20, "tommy@gmail.com"));
+        Member member2 = Member.createMember(new SignupRequestDto("kbs4521", "password", "tommy", 20, "tommy1@gmail.com"));
+        Member savedMember1 = memberRepository.save(member1);
+        Member savedMember2 = memberRepository.save(member2);
+        DiaryRequestDto diaryRequestDto = new DiaryRequestDto("오늘 나는 해피해요", Emotion.HAPPY);
+        Long diaryId = diaryService.write(savedMember1.getId(), diaryRequestDto);
+
+        // when && then
+        assertThatThrownBy(
+                () -> diaryService.findDiary(diaryId, savedMember2.getId())
+        ).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("다이어리 단건 조회 시 public일 경우 다른 회원 조회 가능")
+    void findMember_public() {
+        // given
+        Member member1 = Member.createMember(new SignupRequestDto("kbs4520", "password", "tommy", 20, "tommy@gmail.com"));
+        Member member2 = Member.createMember(new SignupRequestDto("kbs4521", "password", "tommy", 20, "tommy1@gmail.com"));
+        Member savedMember1 = memberRepository.save(member1);
+        Member savedMember2 = memberRepository.save(member2);
+
+        DiaryRequestDto diaryRequestDto = new DiaryRequestDto("오늘 나는 해피해요", Emotion.HAPPY);
+        Long diaryId = diaryService.write(savedMember1.getId(), diaryRequestDto);
+        Diary diary = diaryRepository.findById(diaryId).get();
+        diary.publish();
+
+        // when
+        Diary findDiary = diaryService.findDiary(diaryId, savedMember2.getId());
+
+        // then
+        assertThat(findDiary.isSecret()).isFalse();
+        assertThat(findDiary.getEmotion()).isEqualTo(Emotion.HAPPY);
+        assertThat(findDiary.getContent()).isEqualTo("오늘 나는 해피해요");
+
     }
 
     @Test
@@ -98,12 +139,12 @@ class DiaryServiceTest {
 
         // when && then
         assertThatThrownBy(
-                () -> diaryService.findDiary(diaryId + 1)
+                () -> diaryService.findDiary(diaryId + 1, savedMember.getId())
         ).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    @DisplayName("다중 다이어리 리스트 조회 검증")
+    @DisplayName("다중 다이어리 리스트 조회 - 공개된 다이어리만 조회 가능")
     void findDiaryList() {
 
         // given
@@ -111,14 +152,17 @@ class DiaryServiceTest {
         Member savedMember = memberRepository.save(member);
         DiaryRequestDto diaryRequestDto1 = new DiaryRequestDto("오늘 나는 해피해요", Emotion.HAPPY);
         DiaryRequestDto diaryRequestDto2 = new DiaryRequestDto("오늘 나는 우울해요", Emotion.SAD);
-        diaryService.write(savedMember.getId(), diaryRequestDto1);
+        Long diaryId = diaryService.write(savedMember.getId(), diaryRequestDto1);
         diaryService.write(savedMember.getId(), diaryRequestDto2);
+
+        Diary diary = diaryRepository.findById(diaryId).get();
+        diary.publish();
 
         // when
         List<Diary> diaryList = diaryService.findDiaryList();
 
         // then
-        assertThat(diaryList.size()).isEqualTo(2);
+        assertThat(diaryList.size()).isEqualTo(1);
     }
 
     @Test
@@ -173,6 +217,55 @@ class DiaryServiceTest {
         assertThatThrownBy(
                 () -> diaryService.delete(savedMember2.getId(), diaryId + 1)
         ).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("다이어리 공개 기능 검증")
+    void publish() {
+
+        // given
+        Member member1 = Member.createMember(new SignupRequestDto("kbs4520", "password", "tommy", 20, "tommy@gmail.com"));
+        Member savedMember1 = memberRepository.save(member1);
+
+        DiaryRequestDto diaryRequestDto = new DiaryRequestDto("오늘 나는 해피해요", Emotion.HAPPY);
+        Long diaryId = diaryService.write(savedMember1.getId(), diaryRequestDto);
+
+        Diary beforePublish = diaryRepository.findById(diaryId).get();
+        assertThat(beforePublish.isSecret()).isTrue();
+
+        // when
+        diaryService.publishDiary(diaryId, savedMember1.getId());
+
+        // then
+        Diary afterPublishDiary = diaryRepository.findById(diaryId).get();
+        assertThat(afterPublishDiary.isSecret()).isFalse();
+    }
+
+    @Test
+    @DisplayName("다이어리 공개 기능 작성자가 아닌 경우 예외")
+    void publish_noAuthority() {
+
+        // given
+        Member member1 = Member.createMember(new SignupRequestDto("kbs4520", "password", "tommy", 20, "tommy@gmail.com"));
+        Member savedMember1 = memberRepository.save(member1);
+
+        Member member2 = Member.createMember(new SignupRequestDto("kbs4521", "password", "tommy", 20, "tommy1@gmail.com"));
+        Member savedMember2 = memberRepository.save(member2);
+
+        DiaryRequestDto diaryRequestDto = new DiaryRequestDto("오늘 나는 해피해요", Emotion.HAPPY);
+        Long diaryId = diaryService.write(savedMember1.getId(), diaryRequestDto);
+
+        Diary findDiary = diaryRepository.findById(diaryId).get();
+        assertThat(findDiary.isSecret()).isTrue();
+
+        // when && then
+        assertThatThrownBy(
+                () -> diaryService.publishDiary(diaryId, savedMember2.getId())
+        ).isInstanceOf(IllegalArgumentException.class);
+
+        Diary afterDiary = diaryRepository.findById(diaryId).get();
+        assertThat(afterDiary.isSecret()).isTrue();
+
     }
 
 }

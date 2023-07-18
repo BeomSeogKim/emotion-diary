@@ -30,9 +30,21 @@ public class DiaryService {
         return member;
     }
 
-    // TODO 로그인 서비스 개발 후 검증 로직 추가
-    public Diary findDiary(Long diaryId) {
-        return getDiaryFromDb(diaryId);
+    public Diary findDiary(Long diaryId, Long memberId) {
+        Diary diary = getDiaryFromDb(diaryId);
+        return getDiaryIfAccessible(memberId, diary);
+    }
+
+    private static Diary getDiaryIfAccessible(Long memberId, Diary diary) {
+        if (diary.isSecret() == false) {
+            return diary;
+        } else {
+            if (diary.getMember().getId() == memberId) {
+                return diary;
+            } else {
+                throw new IllegalArgumentException("다이어리에 대한 접근 권한이 없습니다.");
+            }
+        }
     }
 
     private Diary getDiaryFromDb(Long diaryId) {
@@ -41,15 +53,10 @@ public class DiaryService {
         );
     }
 
-    // TODO 로그인 서비스 개발 후 조회 로직 수정
     public List<Diary> findDiaryList() {
-        return diaryRepository.findAll();
+        return diaryRepository.findAllDiariesPublic();
     }
 
-    /*
-     TODO 로그인 서비스 개발 후 검증 로직 추가
-     임시로 header를 통해 받는 로직으로 변경
-     */
     public void delete(Long memberId, Long diaryId) {
         Diary diary = getDiaryFromDb(diaryId);
         deleteDiary(memberId, diary);
@@ -60,6 +67,15 @@ public class DiaryService {
             diaryRepository.delete(diary);
         } else {
             throw new IllegalArgumentException("삭제 권한이 없습니다.");
+        }
+    }
+
+    public void publishDiary(Long diaryId, Long memberId) {
+        Diary diary = getDiaryFromDb(diaryId);
+        if (diary.getMember().getId() == memberId) {
+            diary.publish();
+        } else {
+            throw new IllegalArgumentException("권한이 없습니다.");
         }
     }
 }

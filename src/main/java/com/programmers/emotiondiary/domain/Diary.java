@@ -36,4 +36,8 @@ public class Diary {
     public static Diary createDiary(Member member, DiaryRequestDto diaryRequestDto) {
         return new Diary(diaryRequestDto.getContent(), diaryRequestDto.getEmotion(), member);
     }
+
+    public void publish() {
+        this.secret = false;
+    }
 }

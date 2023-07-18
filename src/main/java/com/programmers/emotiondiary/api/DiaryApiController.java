@@ -21,15 +21,16 @@ public class DiaryApiController {
     @PostMapping
     public DiaryResponseDto write(
             @RequestBody DiaryRequestDto diaryRequestDto,
-            @RequestHeader("memberId") Long memberId
+            @CookieValue(name = "memberId") Long memberId
     ) {
         Long diaryId = diaryService.write(memberId, diaryRequestDto);
         return new DiaryResponseDto(diaryId);
     }
 
     @GetMapping("/{diaryId}")
-    public DiaryInfoDto findDiary(@PathVariable Long diaryId) {
-        Diary diary = diaryService.findDiary(diaryId);
+    public DiaryInfoDto findDiary(@PathVariable Long diaryId,
+                                  @CookieValue(name = "memberId") Long memberId) {
+        Diary diary = diaryService.findDiary(diaryId, memberId);
         return new DiaryInfoDto(diary);
     }
 
@@ -42,9 +43,18 @@ public class DiaryApiController {
     @DeleteMapping("/{diaryId}")
     public String deleteDiary(
             @PathVariable Long diaryId,
-            @RequestHeader("memberId") Long memberId
+            @CookieValue(name = "memberId") Long memberId
     ) {
         diaryService.delete(memberId, diaryId);
         return "삭제가 완료되었습니다.";
+    }
+
+    @PostMapping("/{diaryId}/publish")
+    public String publish(
+            @PathVariable Long diaryId,
+            @CookieValue(name = "memberId") Long memberId
+    ) {
+        diaryService.publishDiary(diaryId, memberId);
+        return "공개처리 되었습니다.";
     }
 }
