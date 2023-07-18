@@ -7,9 +7,11 @@ import com.programmers.emotiondiary.repository.DiaryRepository;
 import com.programmers.emotiondiary.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Transactional(readOnly = true)
 @Service
 @RequiredArgsConstructor
 public class DiaryService {
@@ -17,6 +19,7 @@ public class DiaryService {
     private final DiaryRepository diaryRepository;
     private final MemberRepository memberRepository;
 
+    @Transactional
     public Long write(Long memberId, DiaryRequestDto diaryRequestDto) {
         Member member = findMember(memberId);
         Diary diary = Diary.createDiary(member, diaryRequestDto);
@@ -57,6 +60,7 @@ public class DiaryService {
         return diaryRepository.findAllDiariesPublic();
     }
 
+    @Transactional
     public void delete(Long memberId, Long diaryId) {
         Diary diary = getDiaryFromDb(diaryId);
         deleteDiary(memberId, diary);
@@ -70,6 +74,7 @@ public class DiaryService {
         }
     }
 
+    @Transactional
     public void publishDiary(Long diaryId, Long memberId) {
         Diary diary = getDiaryFromDb(diaryId);
         if (diary.getMember().getId() == memberId) {
