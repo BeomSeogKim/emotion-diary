@@ -18,6 +18,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
+    @Transactional
     public Long signUp(SignupRequestDto signupRequestDto) {
         validateLoginId(signupRequestDto);
         Member member = Member.createMember(signupRequestDto);

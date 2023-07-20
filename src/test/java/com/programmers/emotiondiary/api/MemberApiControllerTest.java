@@ -5,6 +5,7 @@ import com.programmers.emotiondiary.dtos.request.member.ResignRequestDto;
 import com.programmers.emotiondiary.dtos.request.member.SignupRequestDto;
 import com.programmers.emotiondiary.repository.MemberRepository;
 import com.programmers.emotiondiary.service.MemberService;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,9 +125,10 @@ class MemberApiControllerTest {
 
         // when
         this.mockMvc.perform(
-                delete("/api/members/{memberId}", saveId)
+                delete("/api/members")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(resignRequestDto))
+                        .cookie(new Cookie("memberId", String.valueOf(saveId)))
         ).andExpect(status().isOk());
 
         // then
@@ -145,9 +147,10 @@ class MemberApiControllerTest {
 
         // when && then
         this.mockMvc.perform(
-                delete("/api/members/{memberId}", saveId + 1)
+                delete("/api/members")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(resignRequestDto))
+                        .cookie(new Cookie("memberId", String.valueOf(saveId + 1)))
         ).andExpect(status().isBadRequest());
 
     }
@@ -164,9 +167,10 @@ class MemberApiControllerTest {
 
         // when && then
         this.mockMvc.perform(
-                delete("/api/members/{memberId}", saveId)
+                delete("/api/members")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(resignRequestDto))
+                        .cookie(new Cookie("memberId", String.valueOf(saveId)))
         ).andExpect(status().isBadRequest());
 
     }
@@ -183,9 +187,10 @@ class MemberApiControllerTest {
 
         // when && then
         this.mockMvc.perform(
-                delete("/api/members/{memberId}", saveId)
+                delete("/api/members")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(resignRequestDto))
+                        .cookie(new Cookie("memberId", String.valueOf(saveId)))
         ).andExpect(status().isBadRequest());
 
     }

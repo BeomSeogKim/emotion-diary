@@ -40,8 +40,8 @@ public class MemberApiController {
         return MembersInfoDto.convertMemberToDto(memberList);
     }
 
-    @DeleteMapping("/{memberId}")
-    public String deleteMember(@PathVariable Long memberId,
+    @DeleteMapping
+    public String deleteMember(@CookieValue("memberId") Long memberId,
                                @RequestBody @Valid ResignRequestDto resignRequestDto
     ) {
         memberService.deleteMember(memberId, resignRequestDto);
